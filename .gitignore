@@ -1,0 +1,16 @@
+# Gradle
+.gradle/
+build/
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+.project
+.settings/
+.classpath
+bin/
+
+# Misc
+*.log
+local.properties
