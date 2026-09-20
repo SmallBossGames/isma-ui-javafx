@@ -23,6 +23,11 @@ class IsmaTextEditor(
 
     private val fxCoroutineScope = CoroutineScope(Dispatchers.JavaFx)
 
+    private val documentId: String = highlightingService.newDocumentId()
+
+    @Volatile
+    private var highlightVersion = 0
+
     init {
         area = CodeArea().apply {
             style = "-fx-font-family: consolas; -fx-font-size: 12pt;"
@@ -50,9 +55,14 @@ class IsmaTextEditor(
                     paragraphGraphicFactory = LineNumberFactory.get(this)
                 }
 
-                val highlighting = highlightingService.createHighlightingStyleSpans(newValue ?: "")
-
-                setStyleSpans(0, highlighting)
+                val source = newValue ?: ""
+                val version = ++highlightVersion
+                fxCoroutineScope.launch {
+                    val highlighting = highlightingService.createHighlightingStyleSpans(documentId, source)
+                    if (version == highlightVersion) {
+                        setStyleSpans(0, highlighting)
+                    }
+                }
             }
         }
 
@@ -75,8 +85,10 @@ class IsmaTextEditor(
     fun replaceText(text: String) = area.replaceText(text)
 
     fun dispose() {
+        highlightVersion++
         fxCoroutineScope.cancel()
 
+        highlightingService.closeDocument(documentId)
         area.dispose()
     }
 }

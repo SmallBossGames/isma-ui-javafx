@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.grpc.stub)
     implementation(libs.protobuf.java)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.slf4j.api)
 
     implementation(libs.ktor.client.core)

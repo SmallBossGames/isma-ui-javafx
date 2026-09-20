@@ -27,7 +27,7 @@ protobuf {
 sourceSets {
     main {
         proto {
-            srcDir("../../protobuf-contracts")
+            srcDir("../../protos/isma-contracts-proto")
         }
     }
 }

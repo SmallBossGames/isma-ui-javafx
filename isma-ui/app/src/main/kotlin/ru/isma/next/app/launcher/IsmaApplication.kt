@@ -10,6 +10,7 @@ import org.koin.core.context.stopKoin
 import ru.isma.next.app.viewmodels.WindowViewModel
 import ru.isma.next.app.views.MainView
 import ru.isma.next.external.SimulationServerFacade
+import ru.isma.next.external.lsp.LspProcessManager
 
 class IsmaApplication : Application(), KoinComponent {
     lateinit var stage: Stage
@@ -17,10 +18,12 @@ class IsmaApplication : Application(), KoinComponent {
     private val windowViewModel: WindowViewModel by inject()
     private val mainView: MainView by inject()
     private val serverFacade: SimulationServerFacade by inject()
+    private val lspProcessManager: LspProcessManager by inject()
 
     init {
         ismaKoinStart()
         serverFacade.warmup()
+        lspProcessManager.start()
     }
 
     override fun start(stage: Stage) {

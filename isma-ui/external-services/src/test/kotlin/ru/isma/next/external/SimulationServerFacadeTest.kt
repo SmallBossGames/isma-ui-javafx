@@ -17,8 +17,6 @@ import ru.isma.next.external.dtos.CompileResult
 import ru.isma.next.external.dtos.CompilationErrorDto
 import ru.isma.next.external.dtos.RunSimulationParams
 import ru.isma.next.external.dtos.ValidationResult
-import ru.isma.next.external.dtos.SyntaxTokenDto
-import ru.isma.next.external.dtos.SyntaxTokenKind
 import java.io.File
 
 class SimulationServerFacadeTest {
@@ -150,22 +148,6 @@ class SimulationServerFacadeTest {
         verify { compilationClient.validate(sourceCode) }
     }
 
-    @Test
-    fun `getHighlighting delegates to CompilationClient`() {
-        val sourceCode = "model Test {}"
-        val expectedTokens = listOf(
-            SyntaxTokenDto(0, 5, SyntaxTokenKind.KEYWORD),
-            SyntaxTokenDto(6, 4, SyntaxTokenKind.TEXT)
-        )
-
-        every { compilationClient.highlight(sourceCode) } returns expectedTokens
-
-        val result = facade.getHighlighting(sourceCode)
-
-        assert(result.size == 2) { "Expected 2 tokens, got ${result.size}" }
-        assert(result[0].kind == SyntaxTokenKind.KEYWORD) { "Expected KEYWORD, got ${result[0].kind}" }
-        verify { compilationClient.highlight(sourceCode) }
-    }
 
     @Test
     fun `deleteCompiledModel delegates to CompilationClient`() {

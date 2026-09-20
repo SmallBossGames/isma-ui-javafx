@@ -23,10 +23,14 @@ import ru.isma.next.editor.text.services.EditorPlatformService
 import ru.isma.next.editor.text.services.contracts.IEditorPlatformService
 import ru.isma.next.external.SimulationServerFacade
 import ru.isma.next.external.SimulationServerManager
+import ru.isma.next.external.lsp.LspClient
+import ru.isma.next.external.lsp.LspProcessManager
 
 val simulationServerModule = module {
     single { SimulationServerManager() }
     single { SimulationServerFacade(get()) }
+    single { LspProcessManager() }
+    single { LspClient(get<LspProcessManager>().start()) } onClose { it?.shutdown() }
 }
 
 val appServicesModule = module {

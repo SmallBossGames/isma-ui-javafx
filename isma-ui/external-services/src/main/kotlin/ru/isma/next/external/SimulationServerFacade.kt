@@ -5,7 +5,6 @@ import ru.isma.next.domain.models.SimulationProgress
 import ru.isma.next.external.dtos.CachedSimulationResult
 import ru.isma.next.external.dtos.CompileResult
 import ru.isma.next.external.dtos.RunSimulationParams
-import ru.isma.next.external.dtos.SyntaxTokenDto
 import ru.isma.next.external.dtos.ValidationResult
 
 class SimulationServerFacade(
@@ -49,9 +48,6 @@ class SimulationServerFacade(
 
     fun validateModel(lismaSourceCode: String): ValidationResult =
         (compilationClient ?: uninitialized()).validate(lismaSourceCode)
-
-    fun getHighlighting(lismaSourceCode: String): List<SyntaxTokenDto> =
-        (compilationClient ?: uninitialized()).highlight(lismaSourceCode)
 
     fun deleteCompiledModel(modelId: String): Boolean =
         (compilationClient ?: uninitialized()).deleteModel(modelId)

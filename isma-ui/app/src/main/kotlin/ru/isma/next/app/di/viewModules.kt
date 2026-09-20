@@ -1,7 +1,7 @@
 package ru.isma.next.app.di
 
 import org.koin.dsl.module
-import ru.isma.next.app.services.editors.SyntaxHighlighterService
+import ru.isma.next.app.services.editors.LspSyntaxHighlighter
 import ru.isma.next.app.services.project.ProjectEditorPort
 import ru.isma.next.app.views.MainView
 import ru.isma.next.app.views.editors.ProjectEditorPortImpl
@@ -15,7 +15,7 @@ import ru.isma.next.editor.text.services.contracts.IHighlightingService
 import ru.isma.next.editor.text.services.contracts.ISyntaxHighlighter
 
 val editorModule = module {
-    single<ISyntaxHighlighter> { SyntaxHighlighterService(get()) }
+    single<ISyntaxHighlighter> { LspSyntaxHighlighter(get()) }
     single<IHighlightingService> { RemoteLismaHighlightingService(get()) }
 }
 

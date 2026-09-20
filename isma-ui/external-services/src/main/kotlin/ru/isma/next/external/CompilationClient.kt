@@ -2,13 +2,9 @@ package ru.isma.next.external
 
 import ru.isma.next.external.dtos.CompileResult
 import ru.isma.next.external.dtos.CompilationErrorDto
-import ru.isma.next.external.dtos.SyntaxTokenDto
-import ru.isma.next.external.dtos.SyntaxTokenKind
 import ru.isma.next.external.dtos.ValidationResult
 import ru.nstu.isma.contracts.v1.compiler_service.CompileRequest
 import ru.nstu.isma.contracts.v1.compiler_service.DeleteCompiledModelRequest
-import ru.nstu.isma.contracts.v1.compiler_service.HighlightRequest
-import ru.nstu.isma.contracts.v1.compiler_service.TokenKind
 import ru.nstu.isma.contracts.v1.compiler_service.ValidateRequest
 
 class CompilationClient(
@@ -37,24 +33,6 @@ class CompilationClient(
         )
     }
 
-    fun highlight(lismaSourceCode: String): List<SyntaxTokenDto> {
-        val request = HighlightRequest.newBuilder()
-            .setSourceCode(lismaSourceCode)
-            .build()
-        val response = compilerClient.blockingStub.highlight(request)
-        return response.tokensList.map { token ->
-            SyntaxTokenDto(
-                start = token.start,
-                length = token.length,
-                kind = when (token.kind) {
-                    TokenKind.TOKEN_KIND_KEYWORD -> SyntaxTokenKind.KEYWORD
-                    TokenKind.TOKEN_KIND_COMMENT -> SyntaxTokenKind.COMMENT
-                    TokenKind.TOKEN_KIND_NUMBER -> SyntaxTokenKind.NUMBER
-                    else -> SyntaxTokenKind.TEXT
-                },
-            )
-        }
-    }
 
     fun deleteModel(modelId: String): Boolean {
         val request = DeleteCompiledModelRequest.newBuilder()

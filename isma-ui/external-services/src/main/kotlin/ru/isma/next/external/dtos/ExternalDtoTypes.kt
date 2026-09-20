@@ -22,16 +22,3 @@ data class CompilationErrorDto(
     val message: String,
 )
 
-enum class SyntaxTokenKind {
-    UNSPECIFIED,
-    KEYWORD,
-    COMMENT,
-    NUMBER,
-    TEXT,
-}
-
-data class SyntaxTokenDto(
-    val start: Int,
-    val length: Int,
-    val kind: SyntaxTokenKind,
-)

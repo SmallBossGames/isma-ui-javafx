@@ -22,7 +22,8 @@ tasks.withType<JavaExec>().configureEach {
         "--enable-native-access=javafx.graphics",
         "--enable-native-access=io.netty.common",
         "-Disma.server.script=$rootDir/build/bundle/isma-server-app/bin/app",
-        "-Disma.grin.script=$rootDir/build/bundle/grin-app/bin/app"
+        "-Disma.grin.script=$rootDir/build/bundle/grin-app/bin/app",
+        "-Disma.lsp.script=$rootDir/build/bundle/isma-lsp-app/bin/isma-lsp"
     )
 }
 
@@ -61,8 +62,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(project(":isma-ui:toolkit"))
     testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.openjfx.monocle)
 }
 
 tasks.test {
@@ -71,7 +72,10 @@ tasks.test {
         "--add-opens=java.base/java.lang=ALL-UNNAMED",
         "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
         "--add-opens=java.base/java.util=ALL-UNNAMED",
-        "--add-opens=java.base/java.io=ALL-UNNAMED"
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+        "-Dglass.platform=Monocle",
+        "-Dmonocle.platform=Headless",
+        "-Dprism.order=sw"
     )
     // Run tests on the classpath to avoid JPMS split-package conflicts (e.g. MockK)
     (extensions.getByName("moduleOptions") as org.javamodularity.moduleplugin.extensions.TestModuleOptions).runOnClasspath = true
