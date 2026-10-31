@@ -12,7 +12,7 @@ class SimulationServerManager(
     )
 
     companion object {
-        private const val ENV_VAR = "ISMA_SERVER_SCRIPT"
+        private const val ENV_VAR = "ISMA_DAEMON_SCRIPT"
         private const val PROP_NAME = "isma.server.script"
         private var shutdownHookRegistered = false
 
