@@ -1,25 +1,13 @@
 module isma.ui.external.services {
     requires kotlin.stdlib;
     requires kotlinx.coroutines.core;
-    requires isma.ui.grpc;
     requires kotlinx.serialization.json;
     requires isma.ui.domain;
     requires isma.jvm.lib.exchange.format;
-    requires io.grpc.netty;
-    requires io.grpc.protobuf;
-    requires io.grpc.stub;
-    requires com.google.protobuf;
-    requires io.netty.transport;
-    requires static io.netty.transport.classes.epoll;
-    requires static io.netty.transport.epoll.linux.x86_64;
-    requires io.netty.transport.unix.common;
-    requires io.netty.common;
-    requires io.netty.buffer;
-    requires io.netty.codec;
     requires org.slf4j;
-    requires kotlinx.io.core;
 
     exports ru.isma.next.external;
+    exports ru.isma.next.external.cli;
     exports ru.isma.next.external.dtos;
     exports ru.isma.next.external.lsp;
 }

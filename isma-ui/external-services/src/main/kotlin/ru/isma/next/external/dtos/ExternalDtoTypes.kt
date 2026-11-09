@@ -22,3 +22,12 @@ data class CompilationErrorDto(
     val message: String,
 )
 
+/**
+ * The outcome of a LISMA compilation: either the compiled model bytes
+ * (success) or the diagnostics (failure).
+ */
+sealed class CompilationOutcome {
+    data class Success(val compiledModel: ByteArray) : CompilationOutcome()
+    data class Failed(val errors: List<CompilationErrorDto>) : CompilationOutcome()
+}
+

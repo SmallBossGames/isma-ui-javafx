@@ -6,13 +6,6 @@ import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.stage.FileChooser
 import javafx.stage.Window
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
 import ru.isma.next.app.constants.SIMULATION_RESULTS_FILE
 import ru.isma.next.app.models.simulation.NamedPickerItem
 import ru.isma.next.app.models.simulation.NamedPickerModel
@@ -76,7 +69,6 @@ class TaskItemViewModel(val task: SimulationTask) {
 class TasksViewModel(
     private val taskService: ISimulationTaskService,
     private val resultService: SimulationResultService,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.JavaFx,
 ) : AutoCloseable {
     val inProgress: ObservableList<TaskItemViewModel> = FXCollections.observableArrayList()
     val completed: ObservableList<TaskItemViewModel> = FXCollections.observableArrayList()
@@ -84,16 +76,10 @@ class TasksViewModel(
 
     private val items = mutableMapOf<SimulationTask, TaskItemViewModel>()
 
-    private val scope = CoroutineScope(dispatcher + SupervisorJob())
+    private val taskListener: AutoCloseable = taskService.addTaskListener { resync() }
 
     init {
         resync()
-
-        scope.launch {
-            taskService.taskEvents.collect {
-                resync()
-            }
-        }
     }
 
     fun cancel(task: SimulationTask) {
@@ -176,7 +162,7 @@ class TasksViewModel(
     }
 
     override fun close() {
-        scope.cancel()
+        taskListener.close()
     }
 
     companion object {

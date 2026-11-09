@@ -13,15 +13,14 @@ application {
     mainClass.set("ru.isma.next.app.launcher.IsmaApplication")
     applicationDefaultJvmArgs = listOf(
         "--enable-native-access=javafx.graphics",
-        "--enable-native-access=io.netty.common",
     )
 }
 
 tasks.withType<JavaExec>().configureEach {
     jvmArgs(
         "--enable-native-access=javafx.graphics",
-        "--enable-native-access=io.netty.common",
-        "-Disma.server.script=$rootDir/build/bundle/isma-server-app/bin/app",
+        "-Disma.compiler.cli=$rootDir/build/bundle/lisma-compiler-cli-app/bin/lisma-compiler-cli",
+        "-Disma.runner.cli=$rootDir/build/bundle/simulation-runner-cli-app/bin/simulation-runner-cli",
         "-Disma.grin.script=$rootDir/build/bundle/grin-app/bin/app",
         "-Disma.lsp.script=$rootDir/build/bundle/isma-lsp-app/bin/isma-lsp"
     )
@@ -48,15 +47,8 @@ dependencies {
     implementation(project(":isma-ui:text-editor"))
     implementation(project(":isma-ui:toolkit"))
 
-    implementation(project(":isma-ui:grpc"))
     implementation(project(":isma-ui:external-services"))
     implementation(project(":isma-ui:domain"))
-    implementation(libs.grpc.netty)
-    implementation(libs.netty.transport)
-    implementation(libs.netty.transport.classes.epoll)
-    implementation(libs.netty.transport.native.epoll) {
-        artifact { classifier = "linux-x86_64" }
-    }
 
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)

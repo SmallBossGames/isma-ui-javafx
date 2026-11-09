@@ -1,7 +1,6 @@
 rootProject.name = "isma-ui-javafx"
 
 include("isma-ui:app")
-include("isma-ui:grpc")
 include("isma-ui:external-services")
 include("isma-ui:domain")
 include("isma-ui:text-editor")

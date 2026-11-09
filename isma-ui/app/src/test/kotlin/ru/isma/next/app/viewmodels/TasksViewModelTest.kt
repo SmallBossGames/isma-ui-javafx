@@ -2,9 +2,6 @@ package ru.isma.next.app.viewmodels
 
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.jupiter.api.Test
 import ru.isma.next.app.models.LismaTextModel
 import ru.isma.next.app.models.simulation.CauchyInitialsModel
@@ -22,13 +19,19 @@ class TasksViewModelTest {
 
     private class FakeTaskService : ISimulationTaskService {
         val tasksInternal = mutableListOf<SimulationTask>()
-        val eventsInternal = MutableSharedFlow<Unit>(extraBufferCapacity = 64)
+        val listeners = mutableListOf<() -> Unit>()
 
         override val tasks: List<SimulationTask>
             get() = tasksInternal.toList()
 
-        override val taskEvents: Flow<Unit>
-            get() = eventsInternal
+        override fun addTaskListener(listener: () -> Unit): AutoCloseable {
+            listeners.add(listener)
+            return AutoCloseable { listeners.remove(listener) }
+        }
+
+        fun notifyListeners() {
+            listeners.forEach { it() }
+        }
 
         override fun submit(
             modelName: String,
@@ -40,7 +43,7 @@ class TasksViewModelTest {
 
         override fun removeTask(task: SimulationTask) {
             tasksInternal.remove(task)
-            eventsInternal.tryEmit(Unit)
+            notifyListeners()
         }
 
         override fun close() {}
@@ -56,7 +59,7 @@ class TasksViewModelTest {
     private fun createViewModel(
         fake: FakeTaskService,
         resultService: SimulationResultService = mockk(),
-    ) = TasksViewModel(fake, resultService, Dispatchers.Unconfined)
+    ) = TasksViewModel(fake, resultService)
 
     @Test
     fun `completed task appears in completed list`() {
@@ -96,7 +99,7 @@ class TasksViewModelTest {
         assert(viewModel.inProgress.size == 1) { "Expected 1 in-progress task" }
 
         task.status = SimulationTaskStatus.COMPLETED
-        fake.eventsInternal.tryEmit(Unit)
+        fake.notifyListeners()
 
         assert(viewModel.completed.size == 1) { "Expected 1 completed task, got ${viewModel.completed.size}" }
         assert(viewModel.inProgress.isEmpty()) { "Expected no in-progress tasks" }
@@ -114,7 +117,7 @@ class TasksViewModelTest {
             fake.removeTask(task)
         }
 
-        val viewModel = TasksViewModel(fake, resultService, Dispatchers.Unconfined)
+        val viewModel = TasksViewModel(fake, resultService)
 
         assert(viewModel.completed.size == 1) { "Expected 1 completed task before removal" }
 
@@ -137,7 +140,7 @@ class TasksViewModelTest {
             fake.removeTask(task)
         }
 
-        val viewModel = TasksViewModel(fake, resultService, Dispatchers.Unconfined)
+        val viewModel = TasksViewModel(fake, resultService)
 
         assert(viewModel.failed.size == 1) { "Expected 1 failed task before removal" }
 

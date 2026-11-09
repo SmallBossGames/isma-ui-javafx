@@ -1,11 +1,5 @@
 package ru.isma.next.app.services.simulation
 
-import io.grpc.StatusException
-import io.grpc.StatusRuntimeException
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import ru.isma.javafx.extensions.coroutines.UiThreadExecutor
 import ru.isma.next.app.models.CompilationErrorItem
 import ru.isma.next.app.models.LismaTextModel
@@ -22,6 +16,7 @@ import ru.isma.next.external.dtos.CompilationErrorDto
 import ru.isma.next.external.dtos.RunSimulationParams
 import ru.isma.next.domain.models.MetricData
 import ru.isma.next.domain.models.SimulationMetadata
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 
 class SimulationTaskService(
@@ -31,26 +26,23 @@ class SimulationTaskService(
 ) : ISimulationTaskService {
 
     private val tasksInternal = mutableListOf<SimulationTask>()
+    private val listeners = CopyOnWriteArrayList<() -> Unit>()
+    private var nextId = 1L
 
-    private val taskEventsInternal = MutableSharedFlow<Unit>(
-        extraBufferCapacity = 64,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    // One virtual thread per simulation job: the job blocks on the runner stream,
+    // and a virtual thread parks instead of holding a platform thread.
+    private val executor = Executors.newVirtualThreadPerTaskExecutor()
 
     override val tasks: List<SimulationTask>
         get() = tasksInternal.toList()
 
-    override val taskEvents: Flow<Unit> = taskEventsInternal
-
-    private val currentJobs = mutableMapOf<SimulationTask, Job>()
-    private var nextId = 1L
-
-    private val virtualThreadDispatcher = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
-    private val simulationScope = CoroutineScope(virtualThreadDispatcher + SupervisorJob())
+    override fun addTaskListener(listener: () -> Unit): AutoCloseable {
+        listeners.add(listener)
+        return AutoCloseable { listeners.remove(listener) }
+    }
 
     override fun close() {
-        simulationScope.cancel()
-        virtualThreadDispatcher.cancel()
+        executor.shutdown()
     }
 
     override fun submit(
@@ -59,31 +51,17 @@ class SimulationTaskService(
         simulationParameters: SimulationParametersModel,
     ): SimulationTask {
         val task = SimulationTask(nextId++, modelName, simulationParameters)
-
-        val job = simulationScope.launch {
-            try {
-                runSimulationJob(task, lisma, simulationParameters)
-            } finally {
-                currentJobs.remove(task)
-            }
-        }.also { currentJobs[task] = it }
-
+        executor.execute { runSimulationJob(task, lisma, simulationParameters) }
         return task
     }
 
-    private suspend fun runSimulationJob(
+    private fun runSimulationJob(
         task: SimulationTask,
         lisma: LismaTextModel,
         simulationParameters: SimulationParametersModel,
     ) {
         val compileResult = try {
             serverFacade.compileModel(lisma.fullText)
-        } catch (e: StatusException) {
-            fail(task, "Compilation error: ${e.status.description}: ${e.message}")
-            return
-        } catch (e: StatusRuntimeException) {
-            fail(task, "Compilation error: ${e.status.description}: ${e.message}")
-            return
         } catch (e: Exception) {
             fail(task, "Compilation error: ${e.message}")
             return
@@ -110,19 +88,13 @@ class SimulationTaskService(
         }
 
         try {
-            serverFacade.monitorSimulation(simulationId, MONITORING_POLL_INTERVAL_SECONDS).collect { progress ->
+            serverFacade.monitorSimulation(simulationId) { progress ->
                 val normalized = ((progress.currentTime - progress.startTime) / (progress.endTime - progress.startTime)).coerceIn(0.0, 1.0)
                 onUi {
                     task.progress = normalized
                     notifyChange()
                 }
             }
-        } catch (e: StatusException) {
-            fail(task, "Monitor error: ${e.status.description}: ${e.message}")
-            return
-        } catch (e: StatusRuntimeException) {
-            fail(task, "Monitor error: ${e.status.description}: ${e.message}")
-            return
         } catch (e: Exception) {
             fail(task, "Monitor error: ${e.message}")
             return
@@ -149,10 +121,6 @@ class SimulationTaskService(
                 task.progress = 1.0
                 notifyChange()
             }
-        } catch (e: StatusException) {
-            fail(task, "Download error: ${e.status.description}: ${e.message}")
-        } catch (e: StatusRuntimeException) {
-            fail(task, "Download error: ${e.status.description}: ${e.message}")
         } catch (e: Exception) {
             fail(task, "Download error: ${e.message}")
         } catch (e: Error) {
@@ -161,8 +129,7 @@ class SimulationTaskService(
     }
 
     override fun cancelTask(task: SimulationTask) {
-        task.id.let { serverFacade.cancelSimulation(it) }
-        currentJobs[task]?.cancel()
+        serverFacade.cancelSimulation(task.id)
     }
 
     override fun removeTask(task: SimulationTask) {
@@ -183,11 +150,7 @@ class SimulationTaskService(
     }
 
     private fun notifyChange() {
-        taskEventsInternal.tryEmit(Unit)
-    }
-
-    companion object {
-        private const val MONITORING_POLL_INTERVAL_SECONDS = 0.01
+        listeners.forEach { it() }
     }
 }
 

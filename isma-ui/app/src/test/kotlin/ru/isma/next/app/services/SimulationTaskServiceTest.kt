@@ -1,10 +1,8 @@
 package ru.isma.next.app.services
 
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.flow.flow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import ru.isma.javafx.extensions.coroutines.UiThreadExecutor
@@ -62,11 +60,12 @@ class SimulationTaskServiceTest {
             modelId = modelId, errors = emptyList(), warnings = emptyList()
         )
         every { serverFacade.runSimulation(any<RunSimulationParams>()) } returns 42L
-        every { serverFacade.monitorSimulation(42L, 0.01) } returns flow {
-            emit(SimulationProgress(0.0, 10.0, 5.0))
-            emit(SimulationProgress(0.0, 10.0, 10.0))
+        every { serverFacade.monitorSimulation(42L, any()) } answers {
+            val onProgress: (SimulationProgress) -> Unit = secondArg()
+            onProgress(SimulationProgress(0.0, 10.0, 5.0))
+            onProgress(SimulationProgress(0.0, 10.0, 10.0))
         }
-        coEvery { serverFacade.downloadResultToCache(42L) } returns CachedSimulationResult(
+        every { serverFacade.downloadResultToCache(42L) } returns CachedSimulationResult(
             file = File("/tmp/test.bin"),
             columnNames = listOf("x", "y")
         )

@@ -7,26 +7,11 @@ group = "ru.isma.next.ui"
 version = "1.0.0-SNAPSHOT"
 
 dependencies {
-    implementation(project(":isma-ui:grpc"))
     implementation(project(":isma-ui:domain"))
     implementation(project(":isma-jvm-lib:exchange-format"))
-    implementation(libs.grpc.netty)
-    implementation(libs.grpc.protobuf)
-    implementation(libs.grpc.stub)
-    implementation(libs.protobuf.java)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.slf4j.api)
-
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.cio)
-    implementation(libs.kotlinx.io.core)
-
-    implementation(libs.netty.transport)
-    implementation(libs.netty.transport.classes.epoll)
-    implementation(libs.netty.transport.native.epoll) {
-        artifact { classifier = "linux-x86_64" }
-    }
 
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)

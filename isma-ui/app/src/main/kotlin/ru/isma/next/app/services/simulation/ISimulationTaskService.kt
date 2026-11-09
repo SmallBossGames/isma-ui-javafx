@@ -1,6 +1,5 @@
 package ru.isma.next.app.services.simulation
 
-import kotlinx.coroutines.flow.Flow
 import ru.isma.next.app.models.LismaTextModel
 import ru.isma.next.app.models.simulation.SimulationParametersModel
 import ru.isma.next.app.models.simulation.SimulationTask
@@ -9,7 +8,12 @@ interface ISimulationTaskService : AutoCloseable {
 
     val tasks: List<SimulationTask>
 
-    val taskEvents: Flow<Unit>
+    /**
+     * Registers a listener invoked on the UI thread whenever the task list
+     * changes (a task is added, removed, or its status/progress updates).
+     * Returns a handle whose [close] removes the listener.
+     */
+    fun addTaskListener(listener: () -> Unit): AutoCloseable
 
     fun submit(
         modelName: String,

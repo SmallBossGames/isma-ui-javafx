@@ -22,7 +22,6 @@ class IsmaApplication : Application(), KoinComponent {
 
     init {
         ismaKoinStart()
-        serverFacade.warmup()
         lspProcessManager.start()
     }
 

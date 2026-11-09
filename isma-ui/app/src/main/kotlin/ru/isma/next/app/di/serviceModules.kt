@@ -22,13 +22,17 @@ import ru.isma.next.editor.blueprint.services.ITextEditorFactory
 import ru.isma.next.editor.text.services.EditorPlatformService
 import ru.isma.next.editor.text.services.contracts.IEditorPlatformService
 import ru.isma.next.external.SimulationServerFacade
-import ru.isma.next.external.SimulationServerManager
+import ru.isma.next.external.cli.CliToolLaunchers
+import ru.isma.next.external.cli.LismaCompilerCli
+import ru.isma.next.external.cli.SimulationRunnerCli
 import ru.isma.next.external.lsp.LspClient
 import ru.isma.next.external.lsp.LspProcessManager
 
 val simulationServerModule = module {
-    single { SimulationServerManager() }
-    single { SimulationServerFacade(get()) }
+    single { CliToolLaunchers() }
+    single { LismaCompilerCli(get<CliToolLaunchers>().compiler) }
+    single { SimulationRunnerCli(get<CliToolLaunchers>().runner) }
+    single { SimulationServerFacade(get(), get()) }
     single { LspProcessManager() }
     single { LspClient(get<LspProcessManager>().start()) } onClose { it?.shutdown() }
 }

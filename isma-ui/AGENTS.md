@@ -11,11 +11,11 @@ User interface module for the ISMA application, built with Kotlin and JavaFX.
 ## Modules
 
 ### app/
-Main application entry point. Launches the UI and manages server process lifecycle.
+Main application entry point. Launches the UI and manages the LSP process lifecycle.
 
 - **Main class:** `ru.isma.next.app.launcher.IsmaApplication`
 - **Module:** `isma.ui.app.main`
-- **Dependencies:** All other isma-ui modules, gRPC client, Koin DI
+- **Dependencies:** All other isma-ui modules, Koin DI
 
 ### domain/
 Domain models and business logic for UI layer.
@@ -24,17 +24,11 @@ Domain models and business logic for UI layer.
 - Used by other UI modules for shared domain concepts
 
 ### external-services/
-gRPC client layer for communicating with the ISMA server.
+Direct CLI integration layer for the standalone LISMA compiler and simulation runner tools.
 
-- `GrpcSimulationClient` - Netty-based gRPC client with Unix socket transport
-- `SimulationServerManager` - Manages server process lifecycle (start/stop)
-- `SimulationServerFacade` - High-level facade for simulation operations
-
-### grpc/
-Generated gRPC stubs from protobuf contracts.
-
-- Protobuf source: `../../protobuf-contracts/v1/`
-- Uses gRPC-Java with Netty transport
+- `cli/` — CLI process layer: `CliProcess` (stdin/stdout/stderr + graceful termination), `CliLauncher` (path resolution + launch), `CliToolLaunchers` (compiler/runner launchers), `LismaCompilerCli` (compile/validate via stdin), `SimulationRunnerCli` (run + `--list-methods`), `ActiveSimulation` (streams the runner's binary stdout into a result file and exposes TIME values for progress)
+- `SimulationServerFacade` — high-level facade: compile (model ID = local `.class` path), validate, run/monitor/cancel (local simulation IDs), result download, method listing
+- `lsp/` — LSP client layer driving the standalone `isma-lsp` language server
 
 ### text-editor/
 Text editing component for mathematical expressions.
@@ -59,8 +53,11 @@ Shared UI utilities and components.
 
 ## Running
 
-The app requires:
-- `isma.server.script` system property pointing to the server launch script
-- `isma.grin.script` system property pointing to the grin launch script
+The app requires the standalone CLI tools to be resolvable:
+
+- `ISMA_COMPILER_CLI` env var or `isma.compiler.cli` system property — path to the LISMA compiler CLI launch script
+- `ISMA_RUNNER_CLI` env var or `isma.runner.cli` system property — path to the simulation runner CLI launch script
+- `ISMA_GRIN_SCRIPT` env var or `isma.grin.script` system property — path to the grin launch script
+- `ISMA_LSP_SCRIPT` env var or `isma.lsp.script` system property — path to the isma-lsp launch script
 
 When running via Gradle, these are auto-configured to point to the bundle directory.
